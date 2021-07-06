@@ -54,7 +54,7 @@ struct PlayerComparator
         }
         else
         {
-            return 0;
+            return a.GetUid() - b.GetUid();
         }
     }
 };

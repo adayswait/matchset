@@ -47,19 +47,21 @@ Napi::Value MatchSetImpl::Cancel(const Napi::CallbackInfo &info)
 Napi::Value MatchSetImpl::Match(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-    if (info.Length() != 2 || !info[0].IsNumber() || !info[1].IsNumber())
+    if (info.Length() != 2 || !info[0].IsString() || !info[1].IsString())
     {
-        NAPI_THROW(Napi::TypeError::New(env, "2 number param expected"));
+        NAPI_THROW(Napi::TypeError::New(env, "2 string param expected"));
     }
-
-    auto matched = matchSet_->Match(info[0].As<Napi::Number>().Uint32Value(),
-                                    info[1].As<Napi::Number>().Uint32Value());
+    std::uint64_t uid = static_cast<uint64_t>(
+        std::stoull(info[0].As<Napi::String>().Utf8Value()));
+    std::uint64_t score = static_cast<uint64_t>(
+        std::stoull(info[1].As<Napi::String>().Utf8Value()));
+    auto matched = matchSet_->Match(uid, score);
 
     auto ret = Napi::Object::New(env);
-    ret.Set<Napi::Number>(std::string("self"),
-                          Napi::Number::New(env, matched[0]));
-    ret.Set<Napi::Number>(std::string("peer"),
-                          Napi::Number::New(env, matched[1]));
+    ret.Set<Napi::String>(std::string("self"),
+                          Napi::String::New(env, std::to_string(matched[0])));
+    ret.Set<Napi::String>(std::string("peer"),
+                          Napi::String::New(env, std::to_string(matched[1])));
     return ret;
 }
 

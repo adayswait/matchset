@@ -125,7 +125,11 @@ void SkipList<Key, Comparator>::Insert(const Key &key)
     Node *prev[kMaxHeight];
     Node *x = FindGreaterOrEqual(key, prev);
 
-    assert(x == nullptr || !Equal(key, x->key));
+    // assert(x == nullptr || !Equal(key, x->key));
+    if (x != nullptr && Equal(key, x->key))
+    {
+        return;
+    }
 
     int height = RandomHeight();
     if (height > max_height_)
