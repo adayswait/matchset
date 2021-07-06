@@ -1,12 +1,13 @@
 {
   "name": "matchset",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "data structure used in matching service",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adayswait/matchset.git"
   },
   "main": "index.js",
+  "types": "index.d.ts",
   "dependencies": {
     "bindings": "1.5.0",
     "node-addon-api": "4.0.0",
