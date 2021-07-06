@@ -27,7 +27,7 @@ public:
     void Insert(const Key &key);
     void Delete(const Key &key);
     bool Contains(const Key &key) const;
-    Node *Match(const Key &key);
+    Node *Match(const Key &key, std::uint64_t limit);
     class Iterator
     {
     public:
@@ -175,10 +175,11 @@ void SkipList<Key, Comparator>::Delete(const Key &key)
 
 template <typename Key, class Comparator>
 typename SkipList<Key, Comparator>::Node *
-SkipList<Key, Comparator>::Match(const Key &key)
+SkipList<Key, Comparator>::Match(const Key &key, std::uint64_t limit)
 {
     Node *lt = FindLessThan(key);
     Node *gt = nullptr;
+    Node *ret = nullptr;
     if (lt == nullptr)
     {
         gt = FindGreaterOrEqual(key, nullptr);
@@ -197,26 +198,45 @@ SkipList<Key, Comparator>::Match(const Key &key)
         if ((gt->key - key) <= (key - lt->key))
         {
             gt->invalid_ = true;
-            return gt;
+            ret = gt;
         }
         else
         {
             lt->invalid_ = true;
-            return lt;
+            ret = lt;
         }
     }
-    if (gt != nullptr)
+    else if (gt == nullptr && lt == nullptr)
+    {
+        // nop
+    }
+    else if (gt != nullptr)
     {
         gt->invalid_ = true;
-        return gt;
+        ret = gt;
     }
-    if (lt != nullptr)
+    else // (lt != nullptr)
     {
         lt->invalid_ = true;
-        return lt;
+        ret = lt;
     }
-    Insert(key);
-    return nullptr;
+    if (ret != nullptr)
+    {
+        auto diff = ret->key - key;
+        if (diff < 0)
+        {
+            diff = 0 - diff;
+        }
+        if (diff > limit)
+        {
+            ret = nullptr;
+        }
+    }
+    if (ret == nullptr)
+    {
+        Insert(key);
+    }
+    return ret;
 }
 
 template <typename Key, class Comparator>

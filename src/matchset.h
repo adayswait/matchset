@@ -14,7 +14,7 @@ public:
     {
     }
 
-    uint64_t operator-(const Player &player) const
+    std::int64_t operator-(const Player &player) const
     {
         if (uid_ == player.GetUid())
         {
@@ -66,11 +66,13 @@ public:
         : sl_(new SkipList<Player, PlayerComparator>(pcmp, head))
     {
     }
-    std::array<std::uint64_t, 2> Match(std::uint64_t uid, std::uint64_t score)
+    std::array<std::uint64_t, 2> Match(std::uint64_t uid,
+                                       std::uint64_t score,
+                                       std::uint64_t limit)
     {
 
         dict_[uid] = new Player(uid, score);
-        auto peer = sl_->Match(*dict_[uid]);
+        auto peer = sl_->Match(*dict_[uid], limit);
         if (peer == nullptr)
         {
             return {uid, 0};

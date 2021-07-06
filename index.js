@@ -3,9 +3,11 @@ class MatchSetWrapper extends MatchSet {
     constructor() {
         super();
     }
-    match(uid, score) {
-        const ret = this.Match(MatchSetWrapper.transfer2string(uid),
-            MatchSetWrapper.transfer2string(score));
+    match(uid, score, limit) {
+        const ret = this.Match(
+            MatchSetWrapper.transfer2string(uid),
+            MatchSetWrapper.transfer2string(score),
+            MatchSetWrapper.transfer2string(limit));
         if (ret.peer == '0') {
             return null;
         } else {

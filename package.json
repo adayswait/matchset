@@ -1,6 +1,6 @@
 {
   "name": "matchset",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "data structure used in matching service",
   "repository": {
     "type": "git",

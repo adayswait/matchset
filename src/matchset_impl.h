@@ -47,15 +47,18 @@ Napi::Value MatchSetImpl::Cancel(const Napi::CallbackInfo &info)
 Napi::Value MatchSetImpl::Match(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-    if (info.Length() != 2 || !info[0].IsString() || !info[1].IsString())
+    if (info.Length() != 3 || !info[0].IsString() ||
+        !info[1].IsString() || !info[2].IsString())
     {
-        NAPI_THROW(Napi::TypeError::New(env, "2 string param expected"));
+        NAPI_THROW(Napi::TypeError::New(env, "3 string param expected"));
     }
     std::uint64_t uid = static_cast<uint64_t>(
         std::stoull(info[0].As<Napi::String>().Utf8Value()));
     std::uint64_t score = static_cast<uint64_t>(
         std::stoull(info[1].As<Napi::String>().Utf8Value()));
-    auto matched = matchSet_->Match(uid, score);
+    std::uint64_t limit = static_cast<uint64_t>(
+        std::stoull(info[2].As<Napi::String>().Utf8Value()));
+    auto matched = matchSet_->Match(uid, score, limit);
 
     auto ret = Napi::Object::New(env);
     ret.Set<Napi::String>(std::string("self"),
