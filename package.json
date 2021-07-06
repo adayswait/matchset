@@ -1,0 +1,21 @@
+{
+  "name": "matchset",
+  "version": "0.0.1",
+  "description": "data structure used in matching service",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adayswait/matchset.git"
+  },
+  "dependencies": {
+    "bindings": "1.5.0",
+    "node-addon-api": "4.0.0",
+    "node-gyp": "8.1.0"
+  },
+  "keywords": [
+    "game",
+    "match",
+    "napi"
+  ],
+  "author": "adayswait",
+  "license": "GPL-3.0-only"
+}
