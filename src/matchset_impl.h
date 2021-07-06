@@ -9,6 +9,12 @@ class MatchSetImpl : public Napi::ObjectWrap<MatchSetImpl>
 {
 public:
     explicit MatchSetImpl(const Napi::CallbackInfo &info);
+    ~MatchSetImpl()
+    {
+        delete matchSet_;
+        delete placeholder_;
+        delete pcmp_;
+    }
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports);
     Napi::Value Match(const Napi::CallbackInfo &info);
     Napi::Value Cancel(const Napi::CallbackInfo &info);
@@ -16,14 +22,16 @@ public:
 private:
     static Napi::FunctionReference constructor;
     MatchSet *matchSet_;
+    Player *placeholder_;
+    PlayerComparator *pcmp_;
 };
 
 MatchSetImpl::MatchSetImpl(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<MatchSetImpl>(info)
 {
-    Player placeholder{0, 0};
-    PlayerComparator pcmp;
-    matchSet_ = new MatchSet(pcmp, placeholder);
+    placeholder_ = new Player(0, 0);
+    pcmp_ = new PlayerComparator();
+    matchSet_ = new MatchSet(*pcmp_, *placeholder_);
 }
 
 Napi::Object
@@ -41,7 +49,13 @@ MatchSetImpl::Initialize(Napi::Env env, Napi::Object exports)
 Napi::Value MatchSetImpl::Cancel(const Napi::CallbackInfo &info)
 {
     Napi::Env env = info.Env();
-    return Napi::Number::New(env, 0);
+    if (info.Length() != 1 || !info[0].IsString())
+    {
+        NAPI_THROW(Napi::TypeError::New(env, "string param expected"));
+    }
+    std::uint64_t uid = static_cast<uint64_t>(
+        std::stoull(info[0].As<Napi::String>().Utf8Value()));
+    return Napi::Boolean::New(env, matchSet_->Cancel(uid));
 }
 
 Napi::Value MatchSetImpl::Match(const Napi::CallbackInfo &info)

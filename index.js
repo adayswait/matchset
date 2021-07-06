@@ -14,6 +14,9 @@ class MatchSetWrapper extends MatchSet {
             return ret;
         }
     }
+    cancel(uid) {
+        return this.Cancel(MatchSetWrapper.transfer2string(uid));
+    }
     static transfer2string(param) {
         if (typeof param === 'number') {
             return Number.parseInt(param).toString();

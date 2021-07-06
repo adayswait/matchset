@@ -4,6 +4,8 @@ declare module "matchset" {
         match(uid: number | bigint | string,
             score: number | bigint | string,
             limit: number | bigint | string)
-            : null | { self: string, peer: string }
+            : null | { self: string, peer: string };
+
+        cancel(uid: number | bigint | string): boolean;
     }
 }

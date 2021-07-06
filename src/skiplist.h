@@ -11,7 +11,7 @@ private:
     struct Node;
 
 public:
-    explicit SkipList(Comparator cmp, Key &headKey);
+    explicit SkipList(Comparator &cmp, Key &headKey);
     SkipList(const SkipList &) = delete;
     SkipList &operator=(const SkipList &) = delete;
     ~SkipList()
@@ -61,7 +61,7 @@ private:
         kMaxHeight = 12
     };
     int max_height_ = 1;
-    Comparator const compare_;
+    Comparator const &compare_;
     Node *const head_;
     Random rnd_;
 };
@@ -71,10 +71,9 @@ struct SkipList<Key, Comparator>::Node
 {
     explicit Node(const Key &k, int height) : key(k), height_(height)
     {
-        next_.reserve(height);
+        next_.resize(height);
     }
     Key const key;
-    bool invalid_ = false;
 
     Node *Next(int n)
     {
@@ -86,6 +85,10 @@ struct SkipList<Key, Comparator>::Node
         assert(n >= 0);
         next_[n] = x;
     }
+    int GetHeight()
+    {
+        return height_;
+    }
 
 private:
     std::vector<Node *> next_;
@@ -93,7 +96,7 @@ private:
 };
 
 template <typename Key, class Comparator>
-SkipList<Key, Comparator>::SkipList(Comparator cmp, Key &headKey)
+SkipList<Key, Comparator>::SkipList(Comparator &cmp, Key &headKey)
     : compare_(cmp),
       head_(new Node(headKey, kMaxHeight)),
       max_height_(1),
@@ -130,10 +133,10 @@ void SkipList<Key, Comparator>::Insert(const Key &key)
     {
         return;
     }
-
     int height = RandomHeight();
     if (height > max_height_)
     {
+        // prev[0]->SetHeight(height);
         for (int i = max_height_; i < height; i++)
         {
             prev[i] = head_;
@@ -162,12 +165,9 @@ void SkipList<Key, Comparator>::Delete(const Key &key)
     {
         return;
     }
-    for (int i = 0; i < kMaxHeight; i++)
+    auto height = x->GetHeight();
+    for (int i = 0; i < height; i++)
     {
-        if (prev[i] == nullptr)
-        {
-            break;
-        }
         prev[i]->SetNext(i, x->Next(i));
     }
     delete x;
@@ -188,7 +188,6 @@ SkipList<Key, Comparator>::Match(const Key &key, std::uint64_t limit)
     {
         gt = lt->Next(0);
     }
-
     if (gt != nullptr && compare_(gt->key, key) == 0)
     {
         gt = gt->Next(0);
@@ -197,12 +196,10 @@ SkipList<Key, Comparator>::Match(const Key &key, std::uint64_t limit)
     {
         if ((gt->key - key) <= (key - lt->key))
         {
-            gt->invalid_ = true;
             ret = gt;
         }
         else
         {
-            lt->invalid_ = true;
             ret = lt;
         }
     }
@@ -212,12 +209,10 @@ SkipList<Key, Comparator>::Match(const Key &key, std::uint64_t limit)
     }
     else if (gt != nullptr)
     {
-        gt->invalid_ = true;
         ret = gt;
     }
     else // (lt != nullptr)
     {
-        lt->invalid_ = true;
         ret = lt;
     }
     if (ret != nullptr)

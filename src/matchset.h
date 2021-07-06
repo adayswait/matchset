@@ -62,7 +62,7 @@ struct PlayerComparator
 class MatchSet
 {
 public:
-    MatchSet(PlayerComparator pcmp, Player &head)
+    MatchSet(PlayerComparator &pcmp, Player &head)
         : sl_(new SkipList<Player, PlayerComparator>(pcmp, head))
     {
     }
@@ -86,13 +86,18 @@ public:
         return {uid, ret};
     }
 
-    void Cancel(std::uint64_t uid)
+    bool Cancel(std::uint64_t uid)
     {
         if (dict_.find(uid) != dict_.end())
         {
             sl_->Delete(*dict_[uid]);
             delete dict_[uid];
             dict_.erase(uid);
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
