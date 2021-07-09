@@ -30,6 +30,10 @@ public:
     {
         return score_;
     }
+    void UpdateScore(std::uint64_t score)
+    {
+        score_ = score;
+    }
 
 private:
     std::uint64_t uid_;
@@ -70,20 +74,40 @@ public:
                                        std::uint64_t score,
                                        std::uint64_t limit)
     {
-
-        dict_[uid] = new Player(uid, score);
-        auto peer = sl_->Match(*dict_[uid], limit);
+        bool fresher = true;
+        Player *self = nullptr;
+        if (dict_.find(uid) == dict_.end())
+        {
+            self = new Player(uid, score);
+        }
+        else
+        {
+            self = dict_[uid];
+            if (self->GetScore() != score)
+            {
+                Cancel(uid);
+                self->UpdateScore(score);
+            }
+            fresher = false;
+        }
+        auto peer = sl_->Match(*self, limit);
         if (peer == nullptr)
         {
+            if (fresher)
+            {
+                dict_[uid] = self;
+            }
             return {uid, 0};
         }
-        const uint64_t ret = peer->key.GetUid();
-        sl_->Delete(*(dict_[uid]));
+        const uint64_t peerid = peer->key.GetUid();
+        sl_->Delete(*self);
         sl_->Delete(peer->key);
-        delete dict_[ret];
-        dict_.erase(ret);
+        delete dict_[peerid];
+        dict_.erase(peerid);
+        delete dict_[uid];
+        dict_.erase(uid);
 
-        return {uid, ret};
+        return {uid, peerid};
     }
 
     bool Cancel(std::uint64_t uid)
