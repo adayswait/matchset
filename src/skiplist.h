@@ -47,6 +47,7 @@ public:
 
 private:
     int RandomHeight();
+    bool MatchRules(const Key &self, const Key &peer, std::int64_t limit) const;
     bool Equal(const Key &a, const Key &b) const
     {
         return (compare_(a, b) == 0);
@@ -178,8 +179,7 @@ typename SkipList<Key, Comparator>::Node *
 SkipList<Key, Comparator>::Match(const Key &key, std::int64_t limit)
 {
     Node *lt = FindLessThan(key);
-    Node *gt = nullptr;
-    Node *ret = nullptr;
+    Node *gt;
     if (lt == nullptr)
     {
         gt = FindGreaterOrEqual(key, nullptr);
@@ -195,60 +195,27 @@ SkipList<Key, Comparator>::Match(const Key &key, std::int64_t limit)
 
     for (int i = 0; i < 100; i++)
     {
-        if (gt != nullptr && lt != nullptr)
-        {
-            if ((gt->key - key) <= (key - lt->key))
-            {
-                ret = gt;
-            }
-            else
-            {
-                ret = lt;
-            }
-        }
-        else if (gt == nullptr && lt == nullptr)
-        {
-            // nop
-        }
-        else if (gt != nullptr)
-        {
-            ret = gt;
-        }
-        else // (lt != nullptr)
-        {
-            ret = lt;
-        }
-        if (ret != nullptr)
-        {
-            auto diff = ret->key - key;
-            if (diff < 0)
-            {
-                diff = 0 - diff;
-            }
-            if (diff > limit)
-            {
-                ret = nullptr;
-            }
-        }
-        if (ret == nullptr)
+        if (gt == nullptr && lt == nullptr)
         {
             Insert(key);
             return nullptr;
         }
-        if (key % ret->key == 0 && ret->key % key == 0)
+        if (lt != nullptr && MatchRules(key, lt->key, limit))
         {
-            return ret;
+            return lt;
         }
-        else
+        if (gt != nullptr && MatchRules(key, gt->key, limit))
         {
-            if (gt != nullptr)
-            {
-                gt = gt->Next(0);
-            }
-            if (lt != nullptr)
-            {
-                lt = FindLessThan(lt->key);
-            }
+            return gt;
+        }
+
+        if (gt != nullptr)
+        {
+            gt = gt->Next(0);
+        }
+        if (lt != nullptr)
+        {
+            lt = FindLessThan(lt->key);
         }
     }
     Insert(key);
@@ -259,6 +226,27 @@ template <typename Key, class Comparator>
 bool SkipList<Key, Comparator>::KeyIsAfterNode(const Key &key, Node *n) const
 {
     return (n != nullptr) && (compare_(n->key, key) < 0);
+}
+template <typename Key, class Comparator>
+bool SkipList<Key, Comparator>::MatchRules(const Key &self,
+                                          const Key &peer,
+                                          std::int64_t limit) const
+{
+    auto diff = peer - self;
+    if (diff < 0)
+    {
+        diff = 0 - diff;
+    }
+    if (diff > limit)
+    {
+        return false;
+    }
+
+    if (self % peer != 0 || peer % self != 0)
+    {
+        return false;
+    }
+    return true;
 }
 
 template <typename Key, class Comparator>
