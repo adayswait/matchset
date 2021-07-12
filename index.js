@@ -3,11 +3,21 @@ class MatchSetWrapper extends MatchSet {
     constructor() {
         super();
     }
-    match(uid, score, limit) {
+    match(uid, score, limit, attrs, bans) {
+        if (!Array.isArray(attrs) || !Array.isArray(bans)) {
+            throw new Error('Invalid Parameters');
+        }
+        for (let i = 0; i < attrs.length; i++) {
+            attrs[i] = attrs[i].toString();
+        }
+        for (let i = 0; i < bans.length; i++) {
+            bans[i] = bans[i].toString();
+        }
         const ret = this.Match(
             MatchSetWrapper.transfer2string(uid),
             MatchSetWrapper.transfer2string(score),
-            MatchSetWrapper.transfer2string(limit));
+            MatchSetWrapper.transfer2string(limit),
+            attrs, bans);
         if (ret.peer == '0') {
             return null;
         } else {
@@ -27,7 +37,7 @@ class MatchSetWrapper extends MatchSet {
         if (typeof param === "bigint") {
             return param.toString();
         }
-        throw new Error('Invalid Parameter');
+        throw new Error('Invalid Parameters');
     }
 }
 

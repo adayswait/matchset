@@ -27,7 +27,7 @@ public:
     void Insert(const Key &key);
     void Delete(const Key &key);
     bool Contains(const Key &key) const;
-    Node *Match(const Key &key, std::uint64_t limit);
+    Node *Match(const Key &key, std::int64_t limit);
     class Iterator
     {
     public:
@@ -60,7 +60,7 @@ private:
     {
         kMaxHeight = 12
     };
-    int max_height_ = 1;
+    int max_height_;
     Comparator const &compare_;
     Node *const head_;
     Random rnd_;
@@ -98,8 +98,8 @@ private:
 template <typename Key, class Comparator>
 SkipList<Key, Comparator>::SkipList(Comparator &cmp, Key &headKey)
     : compare_(cmp),
-      head_(new Node(headKey, kMaxHeight)),
       max_height_(1),
+      head_(new Node(headKey, kMaxHeight)),
       rnd_(0xdeadbeef)
 {
     for (int i = 0; i < kMaxHeight; i++)
@@ -175,7 +175,7 @@ void SkipList<Key, Comparator>::Delete(const Key &key)
 
 template <typename Key, class Comparator>
 typename SkipList<Key, Comparator>::Node *
-SkipList<Key, Comparator>::Match(const Key &key, std::uint64_t limit)
+SkipList<Key, Comparator>::Match(const Key &key, std::int64_t limit)
 {
     Node *lt = FindLessThan(key);
     Node *gt = nullptr;
@@ -192,46 +192,67 @@ SkipList<Key, Comparator>::Match(const Key &key, std::uint64_t limit)
     {
         gt = gt->Next(0);
     }
-    if (gt != nullptr && lt != nullptr)
+
+    for (int i = 0; i < 100; i++)
     {
-        if ((gt->key - key) <= (key - lt->key))
+        if (gt != nullptr && lt != nullptr)
+        {
+            if ((gt->key - key) <= (key - lt->key))
+            {
+                ret = gt;
+            }
+            else
+            {
+                ret = lt;
+            }
+        }
+        else if (gt == nullptr && lt == nullptr)
+        {
+            // nop
+        }
+        else if (gt != nullptr)
         {
             ret = gt;
         }
-        else
+        else // (lt != nullptr)
         {
             ret = lt;
         }
-    }
-    else if (gt == nullptr && lt == nullptr)
-    {
-        // nop
-    }
-    else if (gt != nullptr)
-    {
-        ret = gt;
-    }
-    else // (lt != nullptr)
-    {
-        ret = lt;
-    }
-    if (ret != nullptr)
-    {
-        auto diff = ret->key - key;
-        if (diff < 0)
+        if (ret != nullptr)
         {
-            diff = 0 - diff;
+            auto diff = ret->key - key;
+            if (diff < 0)
+            {
+                diff = 0 - diff;
+            }
+            if (diff > limit)
+            {
+                ret = nullptr;
+            }
         }
-        if (diff > limit)
+        if (ret == nullptr)
         {
-            ret = nullptr;
+            Insert(key);
+            return nullptr;
+        }
+        if (key % ret->key == 0 && ret->key % key == 0)
+        {
+            return ret;
+        }
+        else
+        {
+            if (gt != nullptr)
+            {
+                gt = gt->Next(0);
+            }
+            if (lt != nullptr)
+            {
+                lt = FindLessThan(lt->key);
+            }
         }
     }
-    if (ret == nullptr)
-    {
-        Insert(key);
-    }
-    return ret;
+    Insert(key);
+    return nullptr;
 }
 
 template <typename Key, class Comparator>
@@ -363,6 +384,33 @@ template <typename Key, class Comparator>
 inline void SkipList<Key, Comparator>::Iterator::SeekToFirst()
 {
     node_ = list_->head_->Next(0);
+}
+
+template <typename Key, class Comparator>
+typename SkipList<Key, Comparator>::Node *SkipList<Key, Comparator>::FindLast()
+    const
+{
+    Node *x = head_;
+    int level = max_height_ - 1;
+    while (true)
+    {
+        Node *next = x->Next(level);
+        if (next == nullptr)
+        {
+            if (level == 0)
+            {
+                return x;
+            }
+            else
+            {
+                level--;
+            }
+        }
+        else
+        {
+            x = next;
+        }
+    }
 }
 
 template <typename Key, class Comparator>

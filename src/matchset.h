@@ -3,15 +3,26 @@
 
 #include <array>
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "skiplist.h"
 
 class Player
 {
 public:
-    Player(std::uint64_t uid, std::uint64_t score) : uid_(uid), score_(score)
+    Player(std::uint64_t uid,
+           std::uint64_t score,
+           std::vector<std::string> &&attrs,
+           std::vector<std::string> &&bans)
+        : uid_(uid),
+          score_(score),
+          attrs_(std::move(attrs)),
+          bans_(std::move(bans))
     {
+        std::sort(attrs_.begin(), attrs_.end());
+        std::sort(bans_.begin(), bans_.end());
     }
 
     std::int64_t operator-(const Player &player) const
@@ -22,6 +33,16 @@ public:
         }
         return GetScore() - player.GetScore();
     }
+    int operator%(const Player &player) const
+    {
+        std::vector<std::string> intersaction;
+        std::set_intersection(attrs_.begin(),
+                              attrs_.end(),
+                              player.GetBans().begin(),
+                              player.GetBans().end(),
+                              std::back_inserter(intersaction));
+        return intersaction.size();
+    }
     uint64_t GetUid() const
     {
         return uid_;
@@ -29,6 +50,14 @@ public:
     uint64_t GetScore() const
     {
         return score_;
+    }
+    const std::vector<std::string> &GetAttrs() const
+    {
+        return attrs_;
+    }
+    const std::vector<std::string> &GetBans() const
+    {
+        return bans_;
     }
     void UpdateScore(std::uint64_t score)
     {
@@ -38,6 +67,8 @@ public:
 private:
     std::uint64_t uid_;
     std::uint64_t score_;
+    std::vector<std::string> attrs_;
+    std::vector<std::string> bans_;
 };
 
 struct PlayerComparator
@@ -72,20 +103,22 @@ public:
     }
     std::array<std::uint64_t, 2> Match(std::uint64_t uid,
                                        std::uint64_t score,
-                                       std::uint64_t limit)
+                                       std::uint64_t limit,
+                                       std::vector<std::string> &&attrs,
+                                       std::vector<std::string> &&bans)
     {
         bool fresher = true;
         Player *self = nullptr;
         if (dict_.find(uid) == dict_.end())
         {
-            self = new Player(uid, score);
+            self = new Player(uid, score, std::move(attrs), std::move(bans));
         }
         else
         {
             self = dict_[uid];
             if (self->GetScore() != score)
             {
-                Cancel(uid);
+                sl_->Delete(*dict_[uid]);
                 self->UpdateScore(score);
             }
             fresher = false;
