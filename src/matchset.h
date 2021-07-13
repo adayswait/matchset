@@ -137,7 +137,14 @@ public:
         sl_->Delete(peer->key);
         delete dict_[peerid];
         dict_.erase(peerid);
-        delete dict_[uid];
+        if (fresher)
+        {
+            delete self;
+        }
+        else
+        {
+            delete dict_[uid];
+        }
         dict_.erase(uid);
 
         return {uid, peerid};
